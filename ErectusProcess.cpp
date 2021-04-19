@@ -196,7 +196,7 @@ bool ErectusProcess::AttachToProcess(const DWORD processId)
 		return false;
 	}
 
-	handle = OpenProcess(PROCESS_VM_OPERATION| PROCESS_VM_READ| PROCESS_VM_WRITE, false, pid);
+	handle = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE, false, pid);
 	if (handle == nullptr || !HwndValid(processId))
 	{
 		SetProcessError(2, "Process State: HANDLE invalid");

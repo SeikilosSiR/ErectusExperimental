@@ -1,6 +1,8 @@
-#include "utils.h"
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 
+#include "utils.h"
 #include <algorithm>
+#include <codecvt>
 
 void Utils::ValidateRgb(float* value)
 {
@@ -59,4 +61,33 @@ std::string Utils::RandomString(std::size_t length)
 	}
 
 	return random_string;
+}
+
+std::string Utils::UTF8ToGBK(const char* strUTF8)
+{
+	int len = MultiByteToWideChar(CP_UTF8, 0, strUTF8, -1, NULL, 0);
+	wchar_t* wszGBK = new wchar_t[len + 1];
+	memset(wszGBK, 0, len * 2 + 2);
+	MultiByteToWideChar(CP_UTF8, 0, strUTF8, -1, wszGBK, len);
+	len = WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, NULL, 0, NULL, NULL);
+	char* szGBK = new char[len + 1];
+	memset(szGBK, 0, len + 1);
+	WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, szGBK, len, NULL, NULL);
+	std::string strTemp(szGBK);
+	if (wszGBK) delete[] wszGBK;
+	if (szGBK) delete[] szGBK;
+	return strTemp;
+}
+
+std::string Utils::strtowstr(const std::string& str)
+{
+	// Convert an ASCII string to a Unicode String
+	std::wstring wstrTo;
+	wchar_t* wszTo = new wchar_t[str.length() + 1];
+	wszTo[str.size()] = L'\0';
+	MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, wszTo, (int)str.length());
+	wstrTo = wszTo;
+	delete[] wszTo;
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+	return myconv.to_bytes(wstrTo);
 }

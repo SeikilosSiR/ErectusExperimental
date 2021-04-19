@@ -17,8 +17,8 @@
 
 [[nodiscard]] std::uint32_t ErectusMemory::GenerateCrc32(std::uint32_t formId) noexcept
 {
-	std::span<const std::uint8_t, 4> aData { reinterpret_cast<const std::uint8_t*>(std::addressof(formId)), sizeof formId };
-	
+	std::span<const std::uint8_t, 4> aData{ reinterpret_cast<const std::uint8_t*>(std::addressof(formId)), sizeof formId };
+
 	constexpr std::array<std::uint32_t, 256> table{
 		0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA, 0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
 		0x0EDB8832, 0x79DCB8A4, 0xE0D5E91E, 0x97D2D988, 0x09B64C2B, 0x7EB17CBD, 0xE7B82D07, 0x90BF1D91,
@@ -607,7 +607,7 @@ std::string ErectusMemory::GetEntityName(const std::uintptr_t ptr)
 	if (!ErectusProcess::Rpm(namePtr + 0x18, name.get(), nameSize))
 		return result;
 
-	result = name.get();
+	result = Utils::UTF8ToGBK(name.get());
 	return result;
 }
 
@@ -628,7 +628,7 @@ bool ErectusMemory::UpdateBufferEntityList()
 				continue;
 
 			auto baseObject = reference.GetBaseObject();
-			
+
 			auto entityFlag = CUSTOM_ENTRY_DEFAULT;
 
 			auto enabledDistance = 0;
@@ -764,7 +764,7 @@ bool ErectusMemory::UpdateBufferPlayerList()
 			continue;
 
 		auto baseObject = reference.GetBaseObject();
-		
+
 		if (baseObject.formId != 0x00000007)
 			continue;
 
@@ -1343,9 +1343,9 @@ std::uint32_t ErectusMemory::GetEntityId(const TesObjectRefr& entityData)
 
 	uint32_t v2 = v1 >> 1;
 	uint32_t v3 = v2 + v2;
-	
+
 	uintptr_t id = 0;
-	if (!ErectusProcess::Rpm(ErectusProcess::exe + OFFSET_ENTITY_ID , &id, sizeof(id))) return 0;
+	if (!ErectusProcess::Rpm(ErectusProcess::exe + OFFSET_ENTITY_ID, &id, sizeof(id))) return 0;
 
 	uint32_t v4 = 0;
 	if (!ErectusProcess::Rpm(id + v3 * 0x8, &v4, sizeof(v4))) return 0;
@@ -1457,8 +1457,8 @@ bool ErectusMemory::SendDamage(const std::uintptr_t targetPtr, const std::uint32
 
 	for (BYTE i = 0; i < count; i++)
 	{
-		//hitsData[i].valueB = localPlayerId;
-		//hitsData[i].valueA = targetId;
+		//hitsData[i].valueA = localPlayerId;
+		//hitsData[i].valueB = targetId;
 		//hitsData[i].valueC = 0;
 		//hitsData[i].initializationType = 0x3;
 		//hitsData[i].uiWeaponServerId = weaponId;
@@ -1559,15 +1559,15 @@ std::uintptr_t ErectusMemory::GetNukeCodePtr(const std::uint32_t formId)
 std::array<int, 8> ErectusMemory::GetNukeCode(const std::uint32_t formId)
 {
 	std::array<int, 8> result = {};
- 
+
 	const auto nukeCodePtr = GetNukeCodePtr(formId);
 	if (!nukeCodePtr)
 		return result;
- 
+
 	float nukeCodeArray[24];
 	if (!ErectusProcess::Rpm(nukeCodePtr, &nukeCodeArray, sizeof nukeCodeArray))
 		return result;
- 
+
 	for (std::size_t i = 0; i < 8; i++)
 	{
 		if (nukeCodeArray[i * 3 + 1] < 0.0f || nukeCodeArray[i * 3 + 1] > 9.0f)
@@ -1707,20 +1707,20 @@ std::string ErectusMemory::GetInstancedItemName(const std::uintptr_t displayPtr)
 std::unordered_map<int, std::string> ErectusMemory::GetFavoritedWeapons()
 {
 	std::unordered_map<int, std::string> result = {
-		{0, "[?] No Weapon Selected"},
-		{1, "[1] Favorited Item Invalid"},
-		{2, "[2] Favorited Item Invalid"},
-		{3, "[3] Favorited Item Invalid"},
-		{4, "[4] Favorited Item Invalid"},
-		{5, "[5] Favorited Item Invalid"},
-		{6, "[6] Favorited Item Invalid"},
-		{7, "[7] Favorited Item Invalid"},
-		{8, "[8] Favorited Item Invalid"},
-		{9, "[9] Favorited Item Invalid"},
-		{10, "[0] Favorited Item Invalid"},
-		{11, "[-] Favorited Item Invalid"},
-		{12, "[=] Favorited Item Invalid"},
-		{13, "[?] Favorited Item Invalid"},
+		{0, "[?] Оружие не выбрано"},
+		{1, "[1] Ошибочный выбранный элемент"},
+		{2, "[2] Ошибочный выбранный элемент"},
+		{3, "[3] Ошибочный выбранный элемент"},
+		{4, "[4] Ошибочный выбранный элемент"},
+		{5, "[5] Ошибочный выбранный элемент"},
+		{6, "[6] Ошибочный выбранный элемент"},
+		{7, "[7] Ошибочный выбранный элемент"},
+		{8, "[8] Ошибочный выбранный элемент"},
+		{9, "[9] Ошибочный выбранный элемент"},
+		{10, "[0] Ошибочный выбранный элемент"},
+		{11, "[-] Ошибочный выбранный элемент"},
+		{12, "[=] Ошибочный выбранный элемент"},
+		{13, "[?] Ошибочный выбранный элемент"},
 	};
 
 	auto inventory = Game::GetLocalPlayer().GetInventory();
@@ -1742,6 +1742,11 @@ std::unordered_map<int, std::string> ErectusMemory::GetFavoritedWeapons()
 		if (weaponName.empty())
 		{
 			weaponName = referenceData.GetName();
+
+			//toUTF8
+			std::string tmp_label = Utils::strtowstr(weaponName);
+			weaponName = tmp_label;
+
 			if (weaponName.empty())
 				continue;
 		}
@@ -1864,6 +1869,6 @@ bool ErectusMemory::PatchIntegrityCheck()
 
 bool ErectusMemory::PatchDetectFlag()
 {
-	BYTE patch[] = { 0x31, 0xC0, 0x90};
+	BYTE patch[] = { 0x31, 0xC0, 0x90 };
 	return ErectusProcess::Wpm(ErectusProcess::exe + OFFSET_FLAGDETECTED, &patch, sizeof patch);
 }

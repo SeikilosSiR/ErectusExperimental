@@ -281,7 +281,7 @@ void Gui::RenderActors(const CustomEntry& entry, const Camera& camera, const Esp
 		if (Settings::utilities.debugEsp)
 			itemText = format(FMT_STRING("{0:08x}\n{1:08x}"), entry.entityFormId, entry.baseObjectFormId);
 
-		RenderText(itemText.c_str(), screenPosition, IM_COL32(color[0] * 255.f, color[1] * 255.f, color[2] * 255.f, alpha * 255.f));
+		RenderText(Utils::strtowstr(itemText).c_str(), screenPosition, IM_COL32(color[0] * 255.f, color[1] * 255.f, color[2] * 255.f, alpha * 255.f));
 	}
 }
 
@@ -388,7 +388,7 @@ void Gui::RenderItems(const CustomEntry& entry, const Camera& camera, const EspS
 		if (Settings::utilities.debugEsp)
 			itemText = format(FMT_STRING("{0:16x}\n{1:08x}\n{2:16x}\n{3:08x}"), entry.entityPtr, entry.entityFormId, entry.baseObjectPtr, entry.baseObjectFormId);
 
-		RenderText(itemText.c_str(), screenPosition, IM_COL32(settings.color[0] * 255.f, settings.color[1] * 255.f, settings.color[2] * 255.f, alpha * 255.f));
+		RenderText(Utils::strtowstr(itemText).c_str(), screenPosition, IM_COL32(settings.color[0] * 255.f, settings.color[1] * 255.f, settings.color[2] * 255.f, alpha * 255.f));
 	}
 }
 
@@ -435,22 +435,22 @@ void Gui::RenderInfoBox()
 
 	if (Settings::esp.infobox.drawPositionSpoofingStatus)
 	{
-		featureText = format(FMT_STRING("Position Spoofing (Active): {0:d} (Height: {1:d})"), static_cast<int>(Threads::positionSpoofingToggle), Settings::localPlayer.positionSpoofingHeight);
+		featureText = fmt::format((const char*)u8"Обман позиции (Вкл.): {0:d} (Height: {1:d})", static_cast<int>(Threads::positionSpoofingToggle), Settings::localPlayer.positionSpoofingHeight);
 		featureState = Settings::localPlayer.positionSpoofingEnabled;
 		infoTexts.emplace_back(featureText, featureState);
 	}
 
 	if (Settings::esp.infobox.drawNukeCodes)
 	{
-		featureText = format(FMT_STRING("{} - Alpha"), fmt::join(ErectusMemory::alphaCode, " "));
+		featureText = format((const char*)u8"{} - Альфа", fmt::join(ErectusMemory::alphaCode, " "));
 		featureState = ErectusMemory::alphaCode == std::array<int, 8>{} ? false : true;
 		infoTexts.emplace_back(featureText, featureState);
 
-		featureText = format(FMT_STRING("{} - Bravo"), fmt::join(ErectusMemory::bravoCode, " "));
+		featureText = format((const char*)u8"{} - Браво", fmt::join(ErectusMemory::bravoCode, " "));
 		featureState = ErectusMemory::bravoCode == std::array<int, 8>{} ? false : true;
 		infoTexts.emplace_back(featureText, featureState);
 
-		featureText = format(FMT_STRING("{} - Charlie"), fmt::join(ErectusMemory::charlieCode, " "));
+		featureText = format((const char*)u8"{} - Чарли", fmt::join(ErectusMemory::charlieCode, " "));
 		featureState = ErectusMemory::charlieCode == std::array<int, 8>{} ? false : true;
 		infoTexts.emplace_back(featureText, featureState);
 	}
@@ -481,17 +481,17 @@ void Gui::MenuBar()
 {
 	if (ImGui::BeginMenuBar())
 	{
-		if (ImGui::MenuItem("Exit"))
+		if (ImGui::MenuItem("Выход"))
 			gApp->Shutdown();
 
 		if (mode == Menu::ProcessMenu)
 		{
-			if (ImGui::MenuItem("Overlay Menu"))
+			if (ImGui::MenuItem("Настройки"))
 				mode = Menu::SettingsMenu;
 		}
 		else
 		{
-			if (ImGui::MenuItem("Process Menu"))
+			if (ImGui::MenuItem("Настройки процесса"))
 				mode = Menu::ProcessMenu;
 		}
 
@@ -500,14 +500,14 @@ void Gui::MenuBar()
 			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 
-			ImGui::MenuItem("Overlay");
+			ImGui::MenuItem("Наложение");
 
 			ImGui::PopStyleVar();
 			ImGui::PopItemFlag();
 		}
 		else
 		{
-			if (ImGui::MenuItem("Overlay"))
+			if (ImGui::MenuItem("Наложение"))
 				gApp->ToggleOverlay();
 		}
 
@@ -547,12 +547,12 @@ void Gui::ProcessMenu()
 	ImGui::SetWindowSize(ImVec2(384, 224));
 
 	ImGui::SetNextItemWidth(-16.f);
-	auto processText = ErectusProcess::pid ? "Fallout76.exe - " + std::to_string(ErectusProcess::pid) : "No  process selected.";
+	auto processText = ErectusProcess::pid ? "Fallout76.exe - " + std::to_string(ErectusProcess::pid) : (const char*)u8"Нет выбранного процесса.";
 	if (ImGui::BeginCombo("###ProcessList", processText.c_str()))
 	{
 		for (auto item : ErectusProcess::GetProcesses())
 		{
-			processText = item ? "Fallout76.exe - " + std::to_string(item) : "NONE";
+			processText = item ? "Fallout76.exe - " + std::to_string(item) : "НЕТ";
 			if (ImGui::Selectable(processText.c_str()))
 				gApp->Attach(item);
 		}
@@ -581,7 +581,7 @@ void Gui::ProcessMenu()
 	ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 	ImGui::Columns(2);
 	ImGui::Separator();
-	ImGui::Text("Overlay Menu Keybind");
+	ImGui::Text("Наложение меню Keybind");
 	ImGui::NextColumn();
 	ImGui::Text("CTRL+ENTER");
 	ImGui::NextColumn();
@@ -685,65 +685,65 @@ void Gui::EspSettings(EspSettings::Actors& actorEsp)
 	ImGui::PushID(&actorEsp);
 	ImGui::Columns(2, nullptr, false);
 
-	LargeButtonToggle("ESP Enabled", actorEsp.enabled);
+	LargeButtonToggle("ESP включено", actorEsp.enabled);
 	ImGui::NextColumn();
 	ImGui::SetNextItemWidth(-FLT_MIN);
-	ImGui::SliderInt("##Distance", &actorEsp.enabledDistance, 0, 3000, "Distance: %d");
+	ImGui::SliderInt("##Distance", &actorEsp.enabledDistance, 0, 3000, "Дистанция: %d");
 	ImGui::NextColumn();
 
-	LargeButtonToggle("Draw Alive", actorEsp.drawAlive);
+	LargeButtonToggle("Показывать живых", actorEsp.drawAlive);
 	ImGui::NextColumn();
 	ImGui::SetNextItemWidth(-FLT_MIN);
 	ImGui::ColorEdit3("##AliveColor", actorEsp.aliveColor);
 	Utils::ValidateRgb(actorEsp.aliveColor);
 	ImGui::NextColumn();
 
-	LargeButtonToggle("Draw Downed", actorEsp.drawDowned);
+	LargeButtonToggle("Показывать упавших", actorEsp.drawDowned);
 	ImGui::NextColumn();
 	ImGui::SetNextItemWidth(-FLT_MIN);
 	ImGui::ColorEdit3("##DownedColor", actorEsp.downedColor);
 	Utils::ValidateRgb(actorEsp.downedColor);
 	ImGui::NextColumn();
 
-	LargeButtonToggle("Draw Dead", actorEsp.drawDead);
+	LargeButtonToggle("Показывать мертвых", actorEsp.drawDead);
 	ImGui::NextColumn();
 	ImGui::SetNextItemWidth(-FLT_MIN);
 	ImGui::ColorEdit3("##DeadColor", actorEsp.deadColor);
 	Utils::ValidateRgb(actorEsp.deadColor);
 	ImGui::NextColumn();
 
-	LargeButtonToggle("Draw Unknown", actorEsp.drawUnknown);
+	LargeButtonToggle("Показывать неизвестные", actorEsp.drawUnknown);
 	ImGui::NextColumn();
 	ImGui::SetNextItemWidth(-FLT_MIN);
 	ImGui::ColorEdit3("##UnknownColor", actorEsp.unknownColor);
 	Utils::ValidateRgb(actorEsp.unknownColor);
 	ImGui::NextColumn();
 
-	LargeButtonToggle("Draw Enabled", actorEsp.drawEnabled);
+	LargeButtonToggle("Показывать активные", actorEsp.drawEnabled);
 	ImGui::NextColumn();
 	ImGui::SetNextItemWidth(-FLT_MIN);
 	ImGui::SliderFloat("##EnabledAlpha", &actorEsp.enabledAlpha, 0.0f, 1.0f, "Alpha: %.2f");
 	ImGui::NextColumn();
 
-	LargeButtonToggle("Draw Disabled", actorEsp.drawDisabled);
+	LargeButtonToggle("Показывать неактивные", actorEsp.drawDisabled);
 	ImGui::NextColumn();
 	ImGui::SetNextItemWidth(-FLT_MIN);
 	ImGui::SliderFloat("##DisabledAlpha", &actorEsp.disabledAlpha, 0.0f, 1.0f, "Alpha: %.2f");
 	ImGui::NextColumn();
 
-	LargeButtonToggle("Draw Named", actorEsp.drawNamed);
+	LargeButtonToggle("Показывать названные", actorEsp.drawNamed);
 	ImGui::NextColumn();
-	LargeButtonToggle("Draw Unnamed", actorEsp.drawUnnamed);
-	ImGui::NextColumn();
-
-	LargeButtonToggle("Show Name", actorEsp.showName);
-	ImGui::NextColumn();
-	LargeButtonToggle("Show Distance", actorEsp.showDistance);
+	LargeButtonToggle("Показывать безымянные", actorEsp.drawUnnamed);
 	ImGui::NextColumn();
 
-	LargeButtonToggle("Show Alive Health", actorEsp.showHealth);
+	LargeButtonToggle("Показыть имя", actorEsp.showName);
 	ImGui::NextColumn();
-	LargeButtonToggle("Show Dead Health", actorEsp.showDeadHealth);
+	LargeButtonToggle("Показать дистанцию", actorEsp.showDistance);
+	ImGui::NextColumn();
+
+	LargeButtonToggle("Показать жизнь живых", actorEsp.showHealth);
+	ImGui::NextColumn();
+	LargeButtonToggle("Показать жизнь мертвых", actorEsp.showDeadHealth);
 	ImGui::NextColumn();
 
 	ImGui::Columns();
@@ -755,32 +755,32 @@ void Gui::EspSettings(EspSettings::Items& itemEsp)
 	ImGui::PushID(&itemEsp);
 	ImGui::Columns(2, nullptr, false);
 
-	LargeButtonToggle("ESP Enabled", itemEsp.enabled);
+	LargeButtonToggle("ESP Включено", itemEsp.enabled);
 	ImGui::NextColumn();
 	ImGui::SetNextItemWidth(-FLT_MIN);
-	ImGui::SliderInt("##Distance", &itemEsp.enabledDistance, 0, 3000, "Distance: %d");
+	ImGui::SliderInt("##Distance", &itemEsp.enabledDistance, 0, 3000, "Дистанция: %d");
 	ImGui::NextColumn();
 
-	LargeButtonToggle("Draw Enabled", itemEsp.drawEnabled);
+	LargeButtonToggle("Показывать активных", itemEsp.drawEnabled);
 	ImGui::NextColumn();
 	ImGui::SetNextItemWidth(-FLT_MIN);
 	ImGui::SliderFloat("##EnabledAlpha", &itemEsp.enabledAlpha, 0.0f, 1.0f, "Alpha: %.2f");
 	ImGui::NextColumn();
 
-	LargeButtonToggle("Draw Disabled", itemEsp.drawDisabled);
+	LargeButtonToggle("Показывать неактивных", itemEsp.drawDisabled);
 	ImGui::NextColumn();
 	ImGui::SetNextItemWidth(-FLT_MIN);
 	ImGui::SliderFloat("##DisabledAlpha", &itemEsp.disabledAlpha, 0.0f, 1.0f, "Alpha: %.2f");
 	ImGui::NextColumn();
 
-	LargeButtonToggle("Draw Named", itemEsp.drawNamed);
+	LargeButtonToggle("Показывать названных", itemEsp.drawNamed);
 	ImGui::NextColumn();
-	LargeButtonToggle("Draw Unnamed", itemEsp.drawUnnamed);
+	LargeButtonToggle("Показывать безымянных", itemEsp.drawUnnamed);
 	ImGui::NextColumn();
 
-	LargeButtonToggle("Show Name", itemEsp.showName);
+	LargeButtonToggle("Показывать Имя", itemEsp.showName);
 	ImGui::NextColumn();
-	LargeButtonToggle("Show Distance", itemEsp.showDistance);
+	LargeButtonToggle("Показывать Дистанцию", itemEsp.showDistance);
 	ImGui::NextColumn();
 
 	ImGui::Columns();
@@ -795,99 +795,99 @@ void Gui::OverlayMenuTabEsp()
 {
 	if (ImGui::BeginTabItem("ESP###ESPTab"))
 	{
-		if (ImGui::CollapsingHeader("Player ESP"))
+		if (ImGui::CollapsingHeader("Настройки ESP Игрока"))
 			EspSettings(Settings::esp.players);
 
-		if (ImGui::CollapsingHeader("NPC ESP"))
+		if (ImGui::CollapsingHeader("Настройки ESP NPC"))
 		{
 			EspSettings(Settings::esp.npcs);
 
 			ImGui::PushItemWidth(-FLT_MIN);
-			ButtonToggle("Always Draw Living 1* NPCs", Settings::esp.npcsExt.overrideLivingOneStar);
+			ButtonToggle("Всегда показывать живых 1* NPCs", Settings::esp.npcsExt.overrideLivingOneStar);
 			ImGui::SameLine();
 			ImGui::ColorEdit3("###LivingOneStarColor", Settings::esp.npcsExt.livingOneStarColor);
 			Utils::ValidateRgb(Settings::esp.npcsExt.livingOneStarColor);
 
-			ButtonToggle("Always Draw Dead 1* NPCs", Settings::esp.npcsExt.overrideDeadOneStar);
+			ButtonToggle("Всегда показывать мертвых 1* NPCs", Settings::esp.npcsExt.overrideDeadOneStar);
 			ImGui::SameLine();
 			ImGui::ColorEdit3("###DeadOneStarColor", Settings::esp.npcsExt.deadOneStarColor);
 			Utils::ValidateRgb(Settings::esp.npcsExt.deadOneStarColor);
 
-			ButtonToggle("Always Draw Living 2* NPCs", Settings::esp.npcsExt.overrideLivingTwoStar);
+			ButtonToggle("Всегда показывать живых 2* NPCs", Settings::esp.npcsExt.overrideLivingTwoStar);
 			ImGui::SameLine();
 			ImGui::ColorEdit3("###LivingTwoStarColor", Settings::esp.npcsExt.livingTwoStarColor);
 			Utils::ValidateRgb(Settings::esp.npcsExt.livingTwoStarColor);
 
-			ButtonToggle("Always Draw Dead 2* NPCs", Settings::esp.npcsExt.overrideDeadTwoStar);
+			ButtonToggle("Всегда показывать мертвых 2* NPCs", Settings::esp.npcsExt.overrideDeadTwoStar);
 			ImGui::SameLine();
 			ImGui::ColorEdit3("###DeadTwoStarColor", Settings::esp.npcsExt.deadTwoStarColor);
 			Utils::ValidateRgb(Settings::esp.npcsExt.deadTwoStarColor);
 
-			ButtonToggle("Always Draw Living 3* NPCs", Settings::esp.npcsExt.overrideLivingThreeStar);
+			ButtonToggle("Всегда показывать живых 3* NPCs", Settings::esp.npcsExt.overrideLivingThreeStar);
 			ImGui::SameLine();
 			ImGui::ColorEdit3("###LivingThreeStarColor", Settings::esp.npcsExt.livingThreeStarColor);
 			Utils::ValidateRgb(Settings::esp.npcsExt.livingThreeStarColor);
 
-			ButtonToggle("Always Draw Dead 3* NPCs", Settings::esp.npcsExt.overrideDeadThreeStar);
+			ButtonToggle("Всегда показывать мертвых 3* NPCs", Settings::esp.npcsExt.overrideDeadThreeStar);
 			ImGui::SameLine();
 			ImGui::ColorEdit3("###DeadThreeStarColor", Settings::esp.npcsExt.deadThreeStarColor);
 			Utils::ValidateRgb(Settings::esp.npcsExt.deadThreeStarColor);
 			ImGui::PopItemWidth();
 		}
 
-		if (ImGui::CollapsingHeader("Container ESP"))
+		if (ImGui::CollapsingHeader("Настройки ESP Хранилища"))
 			EspSettings(Settings::esp.containers);
 
-		if (ImGui::CollapsingHeader("Junk ESP"))
+		if (ImGui::CollapsingHeader("Настройки ESP хлама"))
 			EspSettings(Settings::esp.junk);
 
-		if (ImGui::CollapsingHeader("Magazine ESP"))
+		if (ImGui::CollapsingHeader("Настройки ESP журналов"))
 			EspSettings(Settings::esp.magazines);
 
-		if (ImGui::CollapsingHeader("Bobblehead ESP"))
+		if (ImGui::CollapsingHeader("Настройки ESP пупсов"))
 			EspSettings(Settings::esp.bobbleheads);
 
-		if (ImGui::CollapsingHeader("Item ESP"))
+		if (ImGui::CollapsingHeader("Настройки ESP предметов"))
 			EspSettings(Settings::esp.items);
 
-		if (ImGui::CollapsingHeader("Plan/Recipe ESP"))
+		if (ImGui::CollapsingHeader("Настройки ESP схем/записок"))
 		{
 			EspSettings(Settings::esp.plans);
 
-			ButtonToggle("Draw Known Plans", Settings::esp.plansExt.knownRecipesEnabled);
+			ButtonToggle("Показывать известные", Settings::esp.plansExt.knownRecipesEnabled);
 			ImGui::SameLine();
-			LargeButtonToggle("Draw Unknown Plans", Settings::esp.plansExt.unknownRecipesEnabled);
+			LargeButtonToggle("Показывать неизвестные", Settings::esp.plansExt.unknownRecipesEnabled);
 		}
 
-		if (ImGui::CollapsingHeader("Flora ESP"))
+		if (ImGui::CollapsingHeader("Настройки ESP флоры"))
 		{
 			EspSettings(Settings::esp.flora);
 
-			LargeButtonToggle("Draw Raw Crimson Flux Yielding Flora", Settings::esp.floraExt.crimsonFluxEnabled);
-			LargeButtonToggle("Draw Raw Cobalt Flux Yielding Flora", Settings::esp.floraExt.cobaltFluxEnabled);
-			LargeButtonToggle("Draw Raw Yellowcake Flux Yielding Flora", Settings::esp.floraExt.yellowcakeFluxEnabled);
-			LargeButtonToggle("Draw Raw Fluorescent Flux Yielding Flora", Settings::esp.floraExt.fluorescentFluxEnabled);
-			LargeButtonToggle("Draw Raw Violet Flux Yielding Flora", Settings::esp.floraExt.violetFluxEnabled);
+			LargeButtonToggle("Показывать флору Алого флюса", Settings::esp.floraExt.crimsonFluxEnabled);
+			LargeButtonToggle("Показывать флору Кобальтого флюса", Settings::esp.floraExt.cobaltFluxEnabled);
+			LargeButtonToggle("Показывать флору Уранового флюса", Settings::esp.floraExt.yellowcakeFluxEnabled);
+			LargeButtonToggle("Показывать флору Флуоресцентного флюса", Settings::esp.floraExt.fluorescentFluxEnabled);
+			LargeButtonToggle("Показывать флору Фиолетового флюса", Settings::esp.floraExt.violetFluxEnabled);
 		}
 
-		if (ImGui::CollapsingHeader("Entity ESP"))
+		if (ImGui::CollapsingHeader("Настройки ESP объектов"))
 			EspSettings(Settings::esp.entities);
 
-		if (ImGui::CollapsingHeader("InfoBox"))
+		if (ImGui::CollapsingHeader("Информация"))
 		{
-			LargeButtonToggle("Draw Local Player Data", Settings::esp.infobox.drawPlayerInfo);
-			LargeButtonToggle("Draw Position Status", Settings::esp.infobox.drawPositionSpoofingStatus);
-			LargeButtonToggle("Draw Nuke Codes", Settings::esp.infobox.drawNukeCodes);
-			LargeButtonToggle("Draw Overlay FPS", Settings::esp.infobox.drawFps);
+			LargeButtonToggle("Показать данные локального игрока", Settings::esp.infobox.drawPlayerInfo);
+			LargeButtonToggle("Показать статус позиции", Settings::esp.infobox.drawPositionSpoofingStatus);
+			LargeButtonToggle("Показать Ядерные коды", Settings::esp.infobox.drawNukeCodes);
+			LargeButtonToggle("Показать FPS", Settings::esp.infobox.drawFps);
 		}
 
-		if (ImGui::CollapsingHeader("ESP Whitelist"))
+		if (ImGui::CollapsingHeader("Белый список"))
 		{
 			ImGui::Columns(2, nullptr, false);
 
 			for (auto& [formId, isEnabled] : Settings::esp.whitelist)
 			{
-				auto toggleLabel = format(FMT_STRING("Enabled##espwhiteList{0:x}Enabled"), formId);
+				auto toggleLabel = fmt::format("Включено##espwhiteList{0:x}Enabled", formId);
 				LargeButtonToggle(toggleLabel.c_str(), isEnabled);
 
 				ImGui::NextColumn();
@@ -909,7 +909,7 @@ void Gui::OverlayMenuTabEsp()
 				DWORD key = 0;
 				auto value = false;
 
-				LargeButtonToggle("Enabled##espWhiteListNewEnabled", value);
+				LargeButtonToggle("Включено##espWhiteListNewEnabled", value);
 
 				ImGui::NextColumn();
 
@@ -923,13 +923,13 @@ void Gui::OverlayMenuTabEsp()
 			ImGui::Columns();
 		}
 
-		if (ImGui::CollapsingHeader("ESP Blacklist"))
+		if (ImGui::CollapsingHeader("Чёрный список"))
 		{
 			ImGui::Columns(2, nullptr, false);
 
 			for (auto& [formId, isEnabled] : Settings::esp.blacklist)
 			{
-				auto toggleLabel = format(FMT_STRING("Enabled##espBlackList{0:x}Enabled"), formId);
+				auto toggleLabel = format(FMT_STRING("Включено##espBlackList{0:x}Enabled"), formId);
 				LargeButtonToggle(toggleLabel.c_str(), isEnabled);
 
 				ImGui::NextColumn();
@@ -951,7 +951,7 @@ void Gui::OverlayMenuTabEsp()
 				DWORD key = 0;
 				auto value = false;
 
-				LargeButtonToggle("Enabled##espBlackListNewEnabled", value);
+				LargeButtonToggle("Включено##espBlackListNewEnabled", value);
 
 				ImGui::NextColumn();
 
@@ -970,72 +970,72 @@ void Gui::OverlayMenuTabEsp()
 
 void Gui::OverlayMenuTabLooter()
 {
-	if (ImGui::BeginTabItem("Looter"))
+	if (ImGui::BeginTabItem("Сборщик"))
 	{
-		if (ImGui::CollapsingHeader("Mode"))
+		if (ImGui::CollapsingHeader("Режим"))
 		{
-			if (ImGui::RadioButton("Disabled", Settings::looter.mode == LooterSettings::Mode::Disabled))
+			if (ImGui::RadioButton("Выключен", Settings::looter.mode == LooterSettings::Mode::Disabled))
 				Settings::looter.mode = LooterSettings::Mode::Disabled;
-			if (ImGui::RadioButton("Automatic looting", Settings::looter.mode == LooterSettings::Mode::Auto))
+			if (ImGui::RadioButton("Автосбор", Settings::looter.mode == LooterSettings::Mode::Auto))
 				Settings::looter.mode = LooterSettings::Mode::Auto;
-			if (ImGui::RadioButton("Keybind (CTRL + R)", Settings::looter.mode == LooterSettings::Mode::Keybind))
+			if (ImGui::RadioButton("Привязка кнопок (CTRL + R)", Settings::looter.mode == LooterSettings::Mode::Keybind))
 				Settings::looter.mode = LooterSettings::Mode::Keybind;
 		}
 
-		if (ImGui::CollapsingHeader("Looters"))
+		if (ImGui::CollapsingHeader("Сборщик"))
 		{
-			LargeButtonToggle("Loot NPCs (76m)", Settings::looter.looters.npcs);
-			LargeButtonToggle("Loot Ground Items (76m)", Settings::looter.looters.groundItems);
-			LargeButtonToggle("Loot Containers (6m)", Settings::looter.looters.containers);
-			LargeButtonToggle("Harvest Flora (6m)", Settings::looter.looters.flora);
+			LargeButtonToggle("Сбор с NPCs (76m)", Settings::looter.looters.npcs);
+			LargeButtonToggle("Сбор предметов (76m)", Settings::looter.looters.groundItems);
+			LargeButtonToggle("Сбор контейнеров (6m)", Settings::looter.looters.containers);
+			LargeButtonToggle("Сбор флоры (6m)", Settings::looter.looters.flora);
 		}
 
-		if (ImGui::TreeNodeEx("Selection", ImGuiTreeNodeFlags_Framed)) {
+		if (ImGui::TreeNodeEx("Выбор", ImGuiTreeNodeFlags_Framed)) {
 
-			if (ImGui::CollapsingHeader("Weapons"))
+			if (ImGui::CollapsingHeader("Оружие"))
 			{
-				LargeButtonToggle("All##weapons", Settings::looter.selection.weapons.all);
+				LargeButtonToggle("Всё##weapons", Settings::looter.selection.weapons.all);
 				LargeButtonToggle("1*##weapons", Settings::looter.selection.weapons.oneStar);
 				LargeButtonToggle("2*##weapons", Settings::looter.selection.weapons.twoStar);
 				LargeButtonToggle("3*##weapons", Settings::looter.selection.weapons.threeStar);
 			}
 
-			if (ImGui::CollapsingHeader("Apparel"))
+			if (ImGui::CollapsingHeader("Броня"))
 			{
-				LargeButtonToggle("All##apparel", Settings::looter.selection.apparel.all);
+				LargeButtonToggle("Всё##apparel", Settings::looter.selection.apparel.all);
 				LargeButtonToggle("1*##apparel", Settings::looter.selection.apparel.oneStar);
 				LargeButtonToggle("2*##apparel", Settings::looter.selection.apparel.twoStar);
 				LargeButtonToggle("3*##apparel", Settings::looter.selection.apparel.threeStar);
 			}
 
-			if (ImGui::CollapsingHeader("Aid"))
+			if (ImGui::CollapsingHeader("Помощь"))
 			{
-				LargeButtonToggle("All##aid", Settings::looter.selection.aid.all);
-				LargeButtonToggle("Bobbleheads##aid", Settings::looter.selection.aid.bobbleheads);
-				LargeButtonToggle("Magazines##aid", Settings::looter.selection.aid.magazines);
+				LargeButtonToggle("Всё##aid", Settings::looter.selection.aid.all);
+				LargeButtonToggle("Пупсы##aid", Settings::looter.selection.aid.bobbleheads);
+				LargeButtonToggle("Журналы##aid", Settings::looter.selection.aid.magazines);
 			}
 
-			if (ImGui::CollapsingHeader("Misc"))
+			if (ImGui::CollapsingHeader("Другое"))
 			{
-				LargeButtonToggle("All##misc", Settings::looter.selection.misc.all);
+				LargeButtonToggle("Всё##misc", Settings::looter.selection.misc.all);
 			}
 
-			if (ImGui::CollapsingHeader("Holotapes"))
+			if (ImGui::CollapsingHeader("Голозаписи"))
 			{
-				LargeButtonToggle("All##holo", Settings::looter.selection.holo.all);
+				LargeButtonToggle("Всё##holo", Settings::looter.selection.holo.all);
 			}
 
-			if (ImGui::CollapsingHeader("Notes"))
+			if (ImGui::CollapsingHeader("Записки"))
 			{
-				LargeButtonToggle("All##notes", Settings::looter.selection.notes.all);
-				LargeButtonToggle("Known Plans##notes", Settings::looter.selection.notes.plansKnown);
-				LargeButtonToggle("Unknown Plans##notes", Settings::looter.selection.notes.plansUnknown);
-				LargeButtonToggle("Treasure Maps##notes", Settings::looter.selection.notes.treasureMaps);
+				LargeButtonToggle("Всё##notes", Settings::looter.selection.notes.all);
+				LargeButtonToggle("Известные схемы##notes", Settings::looter.selection.notes.plansKnown);
+				LargeButtonToggle("Неизвестные схемы##notes", Settings::looter.selection.notes.plansUnknown);
+				LargeButtonToggle("Карты сокровищ##notes", Settings::looter.selection.notes.treasureMaps);
 			}
 
-			if (ImGui::CollapsingHeader("Junk"))
+			if (ImGui::CollapsingHeader("Хлам"))
 			{
-				LargeButtonToggle("All##junk", Settings::looter.selection.junk.all);
+				LargeButtonToggle("Всё##junk", Settings::looter.selection.junk.all);
 
 				ImGui::Columns(2, nullptr, false);
 				for (auto& [formId, isEnabled] : Settings::looter.selection.junk.components)
@@ -1048,9 +1048,9 @@ void Gui::OverlayMenuTabLooter()
 				ImGui::Columns();
 			}
 
-			if (ImGui::CollapsingHeader("Flora"))
+			if (ImGui::CollapsingHeader("Флора"))
 			{
-				LargeButtonToggle("All##flora", Settings::looter.selection.flora.all);
+				LargeButtonToggle("Всё##flora", Settings::looter.selection.flora.all);
 
 				ImGui::Columns(2, nullptr, false);
 				for (auto& [formId, isEnabled] : Settings::looter.selection.flora.components)
@@ -1063,28 +1063,28 @@ void Gui::OverlayMenuTabLooter()
 				ImGui::Columns();
 			}
 
-			if (ImGui::CollapsingHeader("Mods"))
+			if (ImGui::CollapsingHeader("Моды"))
 			{
-				LargeButtonToggle("All##mods", Settings::looter.selection.mods.all);
+				LargeButtonToggle("Всё##mods", Settings::looter.selection.mods.all);
 			}
 
-			if (ImGui::CollapsingHeader("Ammo"))
+			if (ImGui::CollapsingHeader("Патроны"))
 			{
-				LargeButtonToggle("All##ammo", Settings::looter.selection.ammo.all);
+				LargeButtonToggle("Всё##ammo", Settings::looter.selection.ammo.all);
 			}
 
-			if (ImGui::CollapsingHeader("Other"))
+			if (ImGui::CollapsingHeader("Разное"))
 			{
-				LargeButtonToggle("Caps##other", Settings::looter.selection.other.caps);
+				LargeButtonToggle("Крышки##other", Settings::looter.selection.other.caps);
 			}
 
-			if (ImGui::CollapsingHeader("Looter Whitelist"))
+			if (ImGui::CollapsingHeader("Белый список"))
 			{
 				ImGui::Columns(2, nullptr, false);
 
 				for (auto& [formId, isEnabled] : Settings::looter.selection.whitelist)
 				{
-					auto toggleLabel = format(FMT_STRING("Enabled##whiteList{0:x}Enabled"), formId);
+					auto toggleLabel = fmt::format("Включено##whiteList{0:x}Enabled", formId);
 					LargeButtonToggle(toggleLabel.c_str(), isEnabled);
 
 					ImGui::NextColumn();
@@ -1106,7 +1106,7 @@ void Gui::OverlayMenuTabLooter()
 					DWORD key = 0;
 					auto value = false;
 
-					LargeButtonToggle("Enabled##whiteListNewEnabled", value);
+					LargeButtonToggle("Включено##whiteListNewEnabled", value);
 
 					ImGui::NextColumn();
 
@@ -1120,13 +1120,13 @@ void Gui::OverlayMenuTabLooter()
 				ImGui::Columns();
 			}
 
-			if (ImGui::CollapsingHeader("Looter Blacklist"))
+			if (ImGui::CollapsingHeader("Чёрный список"))
 			{
 				ImGui::Columns(2, nullptr, false);
 
 				for (auto& [formId, isEnabled] : Settings::looter.selection.blacklist)
 				{
-					auto toggleLabel = format(FMT_STRING("Enabled##blackList{0:x}Enabled"), formId);
+					auto toggleLabel = format(FMT_STRING("Включено##blackList{0:x}Enabled"), formId);
 					LargeButtonToggle(toggleLabel.c_str(), isEnabled);
 
 					ImGui::NextColumn();
@@ -1148,7 +1148,7 @@ void Gui::OverlayMenuTabLooter()
 					DWORD key = 0;
 					auto value = false;
 
-					LargeButtonToggle("Enabled##blackListNewEnabled", value);
+					LargeButtonToggle("Включено##blackListNewEnabled", value);
 
 					ImGui::NextColumn();
 
@@ -1170,89 +1170,89 @@ void Gui::OverlayMenuTabLooter()
 
 void Gui::OverlayMenuTabCombat()
 {
-	if (ImGui::BeginTabItem("Combat###CombatTab"))
+	if (ImGui::BeginTabItem("Бой###CombatTab"))
 	{
-		if (ImGui::CollapsingHeader("Weapon Editor"))
+		if (ImGui::CollapsingHeader("Редактор оружия"))
 		{
 			ImGui::Columns(2, nullptr, false);
 
-			LargeButtonToggle("No Recoil", Settings::weapons.noRecoil);
+			LargeButtonToggle("Без отдачи", Settings::weapons.noRecoil);
 			ImGui::NextColumn();
-			LargeButtonToggle("Infinite Ammo", Settings::weapons.infiniteAmmo);
-			ImGui::NextColumn();
-
-			LargeButtonToggle("No Spread", Settings::weapons.noSpread);
-			ImGui::NextColumn();
-			LargeButtonToggle("Instant Reload", Settings::weapons.instantReload);
+			LargeButtonToggle("Бесконечные патроны", Settings::weapons.infiniteAmmo);
 			ImGui::NextColumn();
 
-			LargeButtonToggle("No Sway", Settings::weapons.noSway);
+			LargeButtonToggle("Без разброса", Settings::weapons.noSpread);
 			ImGui::NextColumn();
-			LargeButtonToggle("Automatic Flag###WeaponAutomatic", Settings::weapons.automaticflag);
+			LargeButtonToggle("Быстрая перезарядка", Settings::weapons.instantReload);
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Capacity###WeaponCapacityEnabled", Settings::weapons.capacityEnabled);
+			LargeButtonToggle("Без раскачки", Settings::weapons.noSway);
+			ImGui::NextColumn();
+			LargeButtonToggle("Флаг автоматического###WeaponAutomatic", Settings::weapons.automaticflag);
+			ImGui::NextColumn();
+
+			LargeButtonToggle("Емкость###WeaponCapacityEnabled", Settings::weapons.capacityEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderInt("###WeaponCapacity", &Settings::weapons.capacity, 0, 999, "Capacity: %d");
+			ImGui::SliderInt("###WeaponCapacity", &Settings::weapons.capacity, 0, 999, "Емкость: %d");
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Speed###WeaponSpeedEnabled", Settings::weapons.speedEnabled);
+			LargeButtonToggle("Скорострельность###WeaponSpeedEnabled", Settings::weapons.speedEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderFloat("###WeaponSpeed", &Settings::weapons.speed, 1.0f, 100.0f, "Speed: %.2f");
+			ImGui::SliderFloat("###WeaponSpeed", &Settings::weapons.speed, 1.0f, 100.0f, "Скорость: %.2f");
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Reach###WeaponReachEnabled", Settings::weapons.reachEnabled);
+			LargeButtonToggle("Дальность###WeaponReachEnabled", Settings::weapons.reachEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderFloat("###WeaponReach", &Settings::weapons.reach, 1.0f, 999.0f, "Reach: %.0f");
+			ImGui::SliderFloat("###WeaponReach", &Settings::weapons.reach, 1.0f, 999.0f, "Дальность: %.0f");
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Range###WeaponRangeEnabled", Settings::weapons.rangeEnabled);
+			LargeButtonToggle("Предел###WeaponRangeEnabled", Settings::weapons.rangeEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderFloat("###WeaponRange", &Settings::weapons.range, 0.0f, 5000.f, "Range: %.0f");
+			ImGui::SliderFloat("###WeaponRange", &Settings::weapons.range, 0.0f, 5000.f, "Предел: %.0f");
 			ImGui::NextColumn();
 
 			ImGui::Columns();
 		}
 
-		if (ImGui::CollapsingHeader("Targeting Settings"))
+		if (ImGui::CollapsingHeader("Настройки наведения"))
 		{
-			LargeButtonToggle("NPC Targeting (Keybind: T)", Settings::targetting.lockNpCs);
+			LargeButtonToggle("Наведение на NPC (Keybind: T)", Settings::targetting.lockNpCs);
 
-			ButtonToggle("Damage Redirection", Settings::targetting.dmgRedirect);
+			ButtonToggle("Перенаправить урон", Settings::targetting.dmgRedirect);
 			ImGui::SameLine();
-			LargeButtonToggle("Send Damage", Settings::targetting.dmgSend);
+			LargeButtonToggle("Отправить урон", Settings::targetting.dmgSend);
 
-			LargeButtonToggle("Also target NPCs with unknown state###TargetUnknown", Settings::targetting.targetUnknown);
+			LargeButtonToggle("Наведение на NPC с неизвестным состоянием###TargetUnknown", Settings::targetting.targetUnknown);
 
-			ButtonToggle("Ignore Essential NPCs###IgnoreEssentialNPCs", Settings::targetting.ignoreEssentialNpcs);
+			ButtonToggle("Игнорировать важных NPCs###IgnoreEssentialNPCs", Settings::targetting.ignoreEssentialNpcs);
 			ImGui::SameLine();
-			LargeButtonToggle("Ignore non-hostile NPCs", Settings::targetting.ignoreNonHostileNpcs);
+			LargeButtonToggle("Игнорировать не враждебных NPCs", Settings::targetting.ignoreNonHostileNpcs);
 
 			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x / 2);
-			ImGui::SliderFloat("###TargetLockingFOV", &Settings::targetting.lockingFov, 5.0f, 40.0f, "Targeting FOV: %.2f");
+			ImGui::SliderFloat("###TargetLockingFOV", &Settings::targetting.lockingFov, 5.0f, 40.0f, "Наведение FOV: %.2f");
 
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(-FLT_MIN);
 			ImGui::ColorEdit3("###TargetLockingColor", Settings::targetting.lockedColor);
 			Utils::ValidateRgb(Settings::esp.players.unknownColor);
 
-			ButtonToggle("Automatic Retargeting###TargetLockingRetargeting", Settings::targetting.retargeting);
+			ButtonToggle("Автоматический перезахват###TargetLockingRetargeting", Settings::targetting.retargeting);
 
 			ImGui::SameLine();
 
 			{
 				ImGui::SetNextItemWidth(-FLT_MIN);
-				const auto sliderText = format(FMT_STRING("Cooldown: {0:d} ({1:d} ms)"), Settings::targetting.cooldown, Settings::targetting.cooldown * 16);
+				const auto sliderText = format(FMT_STRING("Перезарядка: {0:d} ({1:d} ms)"), Settings::targetting.cooldown, Settings::targetting.cooldown * 16);
 				ImGui::SliderInt("###TargetLockingCooldown", &Settings::targetting.cooldown, 0, 120, sliderText.c_str());
 			}
 
 			{
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x / 2);
-				const auto sliderText = format(FMT_STRING("Send Damage (Min): {0:d} ({1:d} ms)"), Settings::targetting.sendDamageMin, Settings::targetting.sendDamageMin * 16);
+				const auto sliderText = format(FMT_STRING("Отправить урон (Min): {0:d} ({1:d} ms)"), Settings::targetting.sendDamageMin, Settings::targetting.sendDamageMin * 16);
 				if (ImGui::SliderInt("###SendDamageMin", &Settings::targetting.sendDamageMin, 1, 60, sliderText.c_str()))
 				{
 					if (Settings::targetting.sendDamageMax < Settings::targetting.sendDamageMin)
@@ -1264,7 +1264,7 @@ void Gui::OverlayMenuTabCombat()
 
 			{
 				ImGui::SetNextItemWidth(-FLT_MIN);
-				const auto sliderText = format(FMT_STRING("Send Damage (Max): {0:d} ({1:d} ms)"), Settings::targetting.sendDamageMax, Settings::targetting.sendDamageMax * 16);
+				const auto sliderText = format(FMT_STRING("Отправить урон (Max): {0:d} ({1:d} ms)"), Settings::targetting.sendDamageMax, Settings::targetting.sendDamageMax * 16);
 				if (ImGui::SliderInt("###SendDamageMax", &Settings::targetting.sendDamageMax, 1, 60, sliderText.c_str()))
 				{
 					if (Settings::targetting.sendDamageMax < Settings::targetting.sendDamageMin)
@@ -1294,13 +1294,13 @@ void Gui::OverlayMenuTabCombat()
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Melee Settings"))
+		if (ImGui::CollapsingHeader("Ближний бой"))
 		{
-			LargeButtonToggle("Melee Enabled (Keybind: U)", Settings::melee.enabled);
+			LargeButtonToggle("Включить Ближний бой (Keybind: U)", Settings::melee.enabled);
 
 			{
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x / 2);
-				const auto sliderText = format(FMT_STRING("Melee Speed (Min): {0:d} ({1:d} ms)"), Settings::melee.speedMin, Settings::melee.speedMin * 16);
+				const auto sliderText = format(FMT_STRING("Ближний бой скорость (Min): {0:d} ({1:d} ms)"), Settings::melee.speedMin, Settings::melee.speedMin * 16);
 				if (ImGui::SliderInt("###MeleeSpeedMin", &Settings::melee.speedMin, 1, 60, sliderText.c_str()))
 				{
 					if (Settings::melee.speedMax < Settings::melee.speedMin)
@@ -1312,7 +1312,7 @@ void Gui::OverlayMenuTabCombat()
 
 			{
 				ImGui::SetNextItemWidth(-FLT_MIN);
-				const auto sliderText = format(FMT_STRING("Melee Speed (Max): {0:d} ({1:d} ms)"), Settings::melee.speedMax, Settings::melee.speedMax * 16);
+				const auto sliderText = format(FMT_STRING("Ближний бой скорость (Max): {0:d} ({1:d} ms)"), Settings::melee.speedMax, Settings::melee.speedMax * 16);
 				if (ImGui::SliderInt("###MeleeSpeedMax", &Settings::melee.speedMax, 1, 60, sliderText.c_str()))
 				{
 					if (Settings::melee.speedMax < Settings::melee.speedMin)
@@ -1321,8 +1321,10 @@ void Gui::OverlayMenuTabCombat()
 			}
 		}
 
-		if (ImGui::CollapsingHeader("One Position Kill"))
-			LargeButtonToggle("OPK (Keybind: CTRL+N)", Settings::opk.enabled);
+		if (ImGui::CollapsingHeader("Притягивание"))
+		{
+			LargeButtonToggle("Притягивание NPCs (CTRL+N)", Settings::opk.enabled);
+		}
 
 		ImGui::EndTabItem();
 	}
@@ -1330,94 +1332,94 @@ void Gui::OverlayMenuTabCombat()
 
 void Gui::OverlayMenuTabPlayer()
 {
-	if (ImGui::BeginTabItem("Player###PlayerTab"))
+	if (ImGui::BeginTabItem("Игрок###PlayerTab"))
 	{
-		if (ImGui::CollapsingHeader("Local Player Settings"))
+		if (ImGui::CollapsingHeader("Настройки игрока"))
 		{
 			ImGui::Columns(2, nullptr, false);
 
-			LargeButtonToggle("Height Spoofing (CTRL+L)##LocalPlayerPositionSpoofingEnabled", Settings::localPlayer.positionSpoofingEnabled);
+			LargeButtonToggle("Обман позиции (CTRL+L)##LocalPlayerPositionSpoofingEnabled", Settings::localPlayer.positionSpoofingEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderInt("###LocalPlayerPositionSpoofingHeight", &Settings::localPlayer.positionSpoofingHeight, -524287, 524287, "Spoofed Height: %d");
+			ImGui::SliderInt("###LocalPlayerPositionSpoofingHeight", &Settings::localPlayer.positionSpoofingHeight, -524287, 524287, "Установить высоту позиции: %d");
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Noclip (CTRL+Y)###NoclipEnabled", Settings::localPlayer.noclipEnabled);
+			LargeButtonToggle("Полет (CTRL+Y)###NoclipEnabled", Settings::localPlayer.noclipEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderFloat("###NoclipSpeed", &Settings::localPlayer.noclipSpeed, 0.0f, 1.0f, "Speed: %.5f");
+			ImGui::SliderFloat("###NoclipSpeed", &Settings::localPlayer.noclipSpeed, 0.0f, 1.0f, "Скорость: %.5f");
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Client State", Settings::localPlayer.clientState);
+			LargeButtonToggle("Статус клиента", Settings::localPlayer.clientState);
 			ImGui::NextColumn();
-			LargeButtonToggle("Automatic Client State", Settings::localPlayer.automaticClientState);
-			ImGui::NextColumn();
-
-			LargeButtonToggle("Freeze Action Points###LocalPlayerFreezeApEnabled", Settings::localPlayer.freezeApEnabled);
-			ImGui::NextColumn();
+			LargeButtonToggle("Автоматический статус клиента", Settings::localPlayer.automaticClientState);
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Action Points###LocalPlayerAPEnabled", Settings::localPlayer.actionPointsEnabled);
+			LargeButtonToggle("Заморозить очки действия###LocalPlayerFreezeApEnabled", Settings::localPlayer.freezeApEnabled);
+			ImGui::NextColumn();
+			ImGui::NextColumn();
+
+			LargeButtonToggle("Очки действий###LocalPlayerAPEnabled", Settings::localPlayer.actionPointsEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderInt("###LocalPlayerAP", &Settings::localPlayer.actionPoints, 0, 99999, "Action Points: %d");
+			ImGui::SliderInt("###LocalPlayerAP", &Settings::localPlayer.actionPoints, 0, 99999, "Очки действий: %d");
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Strength###LocalPlayerStrengthEnabled", Settings::localPlayer.strengthEnabled);
+			LargeButtonToggle("Сила###LocalPlayerStrengthEnabled", Settings::localPlayer.strengthEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderInt("###LocalPlayerStrength", &Settings::localPlayer.strength, 0, 99999, "Strength: %d");
+			ImGui::SliderInt("###LocalPlayerStrength", &Settings::localPlayer.strength, 0, 99999, "Сила: %d");
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Perception###LocalPlayerPerceptionEnabled", Settings::localPlayer.perceptionEnabled);
+			LargeButtonToggle("Восприятие###LocalPlayerPerceptionEnabled", Settings::localPlayer.perceptionEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderInt("###LocalPlayerPerception", &Settings::localPlayer.perception, 0, 99999, "Perception: %d");
+			ImGui::SliderInt("###LocalPlayerPerception", &Settings::localPlayer.perception, 0, 99999, "Восприятие: %d");
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Endurance###LocalPlayerEnduranceEnabled", Settings::localPlayer.enduranceEnabled);
+			LargeButtonToggle("Выносливость###LocalPlayerEnduranceEnabled", Settings::localPlayer.enduranceEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderInt("###LocalPlayerEndurance", &Settings::localPlayer.endurance, 0, 99999, "Endurance: %d");
+			ImGui::SliderInt("###LocalPlayerEndurance", &Settings::localPlayer.endurance, 0, 99999, "Выносливость: %d");
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Charisma###LocalPlayerCharismaEnabled", Settings::localPlayer.charismaEnabled);
+			LargeButtonToggle("Харизма###LocalPlayerCharismaEnabled", Settings::localPlayer.charismaEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderInt("###LocalPlayerCharisma", &Settings::localPlayer.charisma, 0, 99999, "Charisma: %d");
+			ImGui::SliderInt("###LocalPlayerCharisma", &Settings::localPlayer.charisma, 0, 99999, "Харизма: %d");
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Intelligence###LocalPlayerIntelligenceEnabled", Settings::localPlayer.intelligenceEnabled);
+			LargeButtonToggle("Интилект###LocalPlayerIntelligenceEnabled", Settings::localPlayer.intelligenceEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderInt("###LocalPlayerIntelligence", &Settings::localPlayer.intelligence, 0, 99999, "Intelligence: %d");
+			ImGui::SliderInt("###LocalPlayerIntelligence", &Settings::localPlayer.intelligence, 0, 99999, "Интилект: %d");
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Agility###LocalPlayerAgilityEnabled", Settings::localPlayer.agilityEnabled);
+			LargeButtonToggle("Ловкость###LocalPlayerAgilityEnabled", Settings::localPlayer.agilityEnabled);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderInt("###LocalPlayerAgility", &Settings::localPlayer.agility, 0, 99999, "Agility: %d");
+			ImGui::SliderInt("###LocalPlayerAgility", &Settings::localPlayer.agility, 0, 99999, "Ловкость: %d");
 			ImGui::NextColumn();
 
-			LargeButtonToggle("Luck###LocalPlayerLuckEnabled", Settings::localPlayer.luckEnabled);					ImGui::SameLine(235.0f);
+			LargeButtonToggle("Удача###LocalPlayerLuckEnabled", Settings::localPlayer.luckEnabled); ImGui::SameLine(235.0f);
 			ImGui::NextColumn();
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderInt("###LocalPlayerLuck", &Settings::localPlayer.luck, 0, 99999, "Luck: %d");
+			ImGui::SliderInt("###LocalPlayerLuck", &Settings::localPlayer.luck, 0, 99999, "Удача: %d");
 
 			ImGui::Columns();
 		}
 
-		if (ImGui::CollapsingHeader("Character Settings"))
+		if (ImGui::CollapsingHeader("Настройки персонажа"))
 		{
-			LargeButtonToggle("Character Appearance Editing Enabled###ChargenEditingEnabled", Settings::characterEditor.enabled);
+			LargeButtonToggle("Включить редактирование внешнего вида персонажа###ChargenEditingEnabled", Settings::characterEditor.enabled);
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderFloat("###ChargenThin", &Settings::characterEditor.thin, 0.0f, 1.0f, "Character Appearance (Thin): %f");
+			ImGui::SliderFloat("###ChargenThin", &Settings::characterEditor.thin, 0.0f, 1.0f, "Внешний вид персонажа (дрищ): %f");
 
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderFloat("###ChargenMuscular", &Settings::characterEditor.muscular, 0.0f, 1.0f, "Character Appearance (Muscular): %f");
+			ImGui::SliderFloat("###ChargenMuscular", &Settings::characterEditor.muscular, 0.0f, 1.0f, "Внешний вид персонажа (мачо): %f");
 
 			ImGui::SetNextItemWidth(-FLT_MIN);
-			ImGui::SliderFloat("###ChargenLarge", &Settings::characterEditor.large, 0.0f, 1.0f, "Character Appearance (Large): %f");
+			ImGui::SliderFloat("###ChargenLarge", &Settings::characterEditor.large, 0.0f, 1.0f, "Внешний вид персонажа (жирдяй): %f");
 		}
 		ImGui::EndTabItem();
 	}
@@ -1425,11 +1427,11 @@ void Gui::OverlayMenuTabPlayer()
 
 void Gui::OverlayMenuTabUtilities()
 {
-	if (ImGui::BeginTabItem("Utility###UtilityTab"))
+	if (ImGui::BeginTabItem("Инструменты###UtilityTab"))
 	{
-		if (ImGui::CollapsingHeader("Utility"))
+		if (ImGui::CollapsingHeader("Инструменты"))
 		{
-			LargeButtonToggle("ESP Debug Mode", Settings::utilities.debugEsp);
+			LargeButtonToggle("Режим отладки ESP", Settings::utilities.debugEsp);
 
 			{
 				if (Settings::utilities.ptrFormId)
@@ -1438,7 +1440,7 @@ void Gui::OverlayMenuTabUtilities()
 					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 1.0f, 0.0f, 0.4f));
 					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 1.0f, 0.0f, 0.5f));
 
-					if (ImGui::Button("Get Pointer###GetPointerEnabled", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
+					if (ImGui::Button("Получить точку###GetPointerEnabled", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
 						getPtrResult = ErectusMemory::GetPtr(Settings::utilities.ptrFormId);
 
 					ImGui::PopStyleColor(3);
@@ -1450,7 +1452,7 @@ void Gui::OverlayMenuTabUtilities()
 					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 0.0f, 0.0f, 0.5f));
 
 					ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-					ImGui::Button("Get Pointer###GetPointerDisabled", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f));
+					ImGui::Button("Получить точку###GetPointerDisabled", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f));
 					ImGui::PopItemFlag();
 
 					ImGui::PopStyleColor(3);
@@ -1481,7 +1483,7 @@ void Gui::OverlayMenuTabUtilities()
 					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 1.0f, 0.0f, 0.4f));
 					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 1.0f, 0.0f, 0.5f));
 
-					if (ImGui::Button("Get Address###GetAddressEnabled", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
+					if (ImGui::Button("Получить адрес###GetAddressEnabled", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
 						getAddressResult = ErectusMemory::GetAddress(Settings::utilities.addressFormId);
 
 					ImGui::PopStyleColor(3);
@@ -1493,7 +1495,7 @@ void Gui::OverlayMenuTabUtilities()
 					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 0.0f, 0.0f, 0.5f));
 
 					ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-					ImGui::Button("Get Address###GetAddressDisabled", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f));
+					ImGui::Button("Получить адрес###GetAddressDisabled", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f));
 					ImGui::PopItemFlag();
 
 					ImGui::PopStyleColor(3);
@@ -1520,9 +1522,9 @@ void Gui::OverlayMenuTabUtilities()
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Reference Editor"))
+		if (ImGui::CollapsingHeader("Редактор ссылок"))
 		{
-			ButtonToggle("Source FormId###SwapperSourceFormIdToggle", swapperSourceToggle);
+			ButtonToggle("Источник FormId###SwapperSourceFormIdToggle", swapperSourceToggle);
 
 			ImGui::SameLine();
 
@@ -1532,7 +1534,7 @@ void Gui::OverlayMenuTabUtilities()
 					nullptr, nullptr, "%08lX", ImGuiInputTextFlags_CharsHexadecimal);
 			}
 
-			ButtonToggle("Destination FormId###SwapperDestinationFormIdToggle", swapperDestinationToggle);
+			ButtonToggle("Цель FormId###SwapperDestinationFormIdToggle", swapperDestinationToggle);
 
 			ImGui::SameLine();
 
@@ -1548,7 +1550,7 @@ void Gui::OverlayMenuTabUtilities()
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 1.0f, 0.0f, 0.4f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 1.0f, 0.0f, 0.5f));
 
-				if (ImGui::Button("Edit Reference (Overwrite Destination)###EditReferenceEnabled", ImVec2(-FLT_MIN, 0.0f)))
+				if (ImGui::Button("Редактировать ссылку (Перезаписать цель)###EditReferenceEnabled", ImVec2(-FLT_MIN, 0.0f)))
 				{
 					if (ErectusMemory::ReferenceSwap(Settings::swapper.sourceFormId, Settings::swapper.destinationFormId))
 					{
@@ -1567,16 +1569,16 @@ void Gui::OverlayMenuTabUtilities()
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 0.0f, 0.0f, 0.5f));
 
 				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-				ImGui::Button("Edit Reference (Overwrite Destination)###EditReferenceDisabled", ImVec2(-FLT_MIN, 0.0f));
+				ImGui::Button("Редактировать ссылку (Перезаписать цель)###EditReferenceDisabled", ImVec2(-FLT_MIN, 0.0f));
 				ImGui::PopItemFlag();
 
 				ImGui::PopStyleColor(3);
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Item Transferring"))
+		if (ImGui::CollapsingHeader("Передача предметов"))
 		{
-			SmallButtonToggle("Source###TransferSourceFormIdToggle", transferSourceToggle);
+			SmallButtonToggle("Источник###TransferSourceFormIdToggle", transferSourceToggle);
 
 			ImGui::SameLine();
 
@@ -1593,18 +1595,18 @@ void Gui::OverlayMenuTabUtilities()
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 1.0f, 0.0f, 0.4f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 1.0f, 0.0f, 0.5f));
 
-				if (ImGui::Button("Get Player###TransferSourceLocalPlayer", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
+				if (ImGui::Button("Игрок###TransferSourceLocalPlayer", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
 					Settings::customTransferSettings.sourceFormId = Game::GetLocalPlayer().formId;
 
 				ImGui::SameLine();
 
-				if (ImGui::Button("Get STASH###TransferSourceSTASH", ImVec2(-FLT_MIN, 0.0f)))
+				if (ImGui::Button("Сундук###TransferSourceSTASH", ImVec2(-FLT_MIN, 0.0f)))
 					Settings::customTransferSettings.sourceFormId = Game::GetLocalPlayer().GetStashFormId();
 
 				ImGui::PopStyleColor(3);
 			}
 
-			SmallButtonToggle("Destination###TransferDestinationFormIdToggle", transferDestinationToggle);
+			SmallButtonToggle("Цель###TransferDestinationFormIdToggle", transferDestinationToggle);
 
 			ImGui::SameLine();
 
@@ -1619,11 +1621,11 @@ void Gui::OverlayMenuTabUtilities()
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 1.0f, 0.0f, 0.4f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 1.0f, 0.0f, 0.5f));
 				ImGui::SameLine();
-				if (ImGui::Button("Get Player###TransferDestinationLocalPlayer", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
+				if (ImGui::Button("Игрок###TransferDestinationLocalPlayer", ImVec2(ImGui::GetContentRegionAvail().x / 2, 0.0f)))
 					Settings::customTransferSettings.destinationFormId = Game::GetLocalPlayer().formId;
 
 				ImGui::SameLine();
-				if (ImGui::Button("Get STASH###TransferDestinationSTASH", ImVec2(-FLT_MIN, 0.0f)))
+				if (ImGui::Button("Сундук###TransferDestinationSTASH", ImVec2(-FLT_MIN, 0.0f)))
 					Settings::customTransferSettings.destinationFormId = Game::GetLocalPlayer().GetStashFormId();
 				ImGui::PopStyleColor(3);
 			}
@@ -1644,7 +1646,7 @@ void Gui::OverlayMenuTabUtilities()
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 1.0f, 0.0f, 0.4f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 1.0f, 0.0f, 0.5f));
 
-				if (ImGui::Button("Transfer Items###TransferItemsEnabled", ImVec2(-FLT_MIN, 0.0f)))
+				if (ImGui::Button("Передать предметы###TransferItemsEnabled", ImVec2(-FLT_MIN, 0.0f)))
 					ErectusMemory::TransferItems(Settings::customTransferSettings.sourceFormId, Settings::customTransferSettings.destinationFormId);
 
 				ImGui::PopStyleColor(3);
@@ -1656,20 +1658,20 @@ void Gui::OverlayMenuTabUtilities()
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 0.0f, 0.0f, 0.5f));
 
 				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-				ImGui::Button("Transfer Items###TransferItemsDisabled", ImVec2(-FLT_MIN, 0.0f));
+				ImGui::Button("Передать предметы###TransferItemsDisabled", ImVec2(-FLT_MIN, 0.0f));
 				ImGui::PopItemFlag();
 
 				ImGui::PopStyleColor(3);
 			}
 
-			LargeButtonToggle("Use Item Transfer Whitelist", Settings::customTransferSettings.useWhitelist);
-			LargeButtonToggle("Use Item Transfer Blacklist", Settings::customTransferSettings.useBlacklist);
+			LargeButtonToggle("Использовать белый список", Settings::customTransferSettings.useWhitelist);
+			LargeButtonToggle("Использовать черный список", Settings::customTransferSettings.useBlacklist);
 
-			if (ImGui::CollapsingHeader("Item Transfer Whitelist Settings"))
+			if (ImGui::CollapsingHeader("Настройки белого списка"))
 			{
 				for (auto i = 0; i < 32; i++)
 				{
-					auto toggleLabel = format(FMT_STRING("Transfer Whitelist Slot: {0:d}"), i);
+					auto toggleLabel = format(FMT_STRING("Слот передачи: {0:d}"), i);
 					ButtonToggle(toggleLabel.c_str(), Settings::customTransferSettings.whitelisted[i]);
 
 					ImGui::SameLine();
@@ -1681,11 +1683,11 @@ void Gui::OverlayMenuTabUtilities()
 				}
 			}
 
-			if (ImGui::CollapsingHeader("Item Transfer Blacklist Settings"))
+			if (ImGui::CollapsingHeader("Настройки черного списка"))
 			{
 				for (auto i = 0; i < 32; i++)
 				{
-					auto toggleLabel = format(FMT_STRING("Transfer Blacklist Slot: {0:d}"), i);
+					auto toggleLabel = format(FMT_STRING("Слот передачи: {0:d}"), i);
 					ButtonToggle(toggleLabel.c_str(), Settings::customTransferSettings.blacklisted[i]);
 
 					ImGui::SameLine();
@@ -1698,9 +1700,9 @@ void Gui::OverlayMenuTabUtilities()
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Nuke Codes"))
+		if (ImGui::CollapsingHeader("Ядерные коды"))
 		{
-			ButtonToggle("Automatic Nuke Codes", Settings::customNukeCodeSettings.automaticNukeCodes);
+			ButtonToggle("Автоматически получать коды", Settings::customNukeCodeSettings.automaticNukeCodes);
 
 			ImGui::SameLine();
 
@@ -1709,19 +1711,19 @@ void Gui::OverlayMenuTabUtilities()
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 1.0f, 0.0f, 0.4f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 1.0f, 0.0f, 0.5f));
 
-				if (ImGui::Button("Get Nuke Codes", ImVec2(-FLT_MIN, 0.0f)))
+				if (ImGui::Button("Получить ядерные коды", ImVec2(-FLT_MIN, 0.0f)))
 					ErectusMemory::UpdateNukeCodes();
 
 				ImGui::PopStyleColor(3);
 			}
 
-			auto text = format(FMT_STRING("{} - Alpha"), fmt::join(ErectusMemory::alphaCode, " "));
+			auto text = format("{} - Альфа", fmt::join(ErectusMemory::alphaCode, " "));
 			ImGui::Text(text.c_str());
 
-			text = format(FMT_STRING("{} - Bravo"), fmt::join(ErectusMemory::bravoCode, " "));
+			text = format("{} - Браво", fmt::join(ErectusMemory::bravoCode, " "));
 			ImGui::Text(text.c_str());
 
-			text = format(FMT_STRING("{} - Charlie"), fmt::join(ErectusMemory::charlieCode, " "));
+			text = format("{} - Чарли", fmt::join(ErectusMemory::charlieCode, " "));
 			ImGui::Text(text.c_str());
 		}
 		ImGui::EndTabItem();
@@ -1730,11 +1732,11 @@ void Gui::OverlayMenuTabUtilities()
 
 void Gui::OverlayMenuTabTeleporter()
 {
-	if (ImGui::BeginTabItem("Teleporter###TeleporterTab"))
+	if (ImGui::BeginTabItem("Телепорт###TeleporterTab"))
 	{
 		for (auto i = 0; i < 16; i++)
 		{
-			auto teleportHeaderText = format(FMT_STRING("Teleport Slot: {0:d}"), i);
+			auto teleportHeaderText = format(FMT_STRING("Слот телепорта: {0:d}"), i);
 			if (ImGui::CollapsingHeader(teleportHeaderText.c_str()))
 			{
 				{
@@ -1777,7 +1779,7 @@ void Gui::OverlayMenuTabTeleporter()
 				ImGui::SameLine();
 
 				{
-					auto buttonLabel = format(FMT_STRING("Set Position###TeleportDestination{:d}"), i);
+					auto buttonLabel = format(FMT_STRING("Установить позицию###TeleportDestination{:d}"), i);
 					if (!Settings::teleporter.entries[i].disableSaving)
 					{
 						ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 1.0f, 0.0f, 0.3f));
@@ -1806,7 +1808,7 @@ void Gui::OverlayMenuTabTeleporter()
 				ImGui::SameLine();
 
 				{
-					auto buttonLabel = format(FMT_STRING("Lock###DisableSaving{:d}"), i);
+					auto buttonLabel = format(FMT_STRING("Заблокировать###DisableSaving{:d}"), i);
 					ButtonToggle(buttonLabel.c_str(), Settings::teleporter.entries[i].disableSaving);
 				}
 
@@ -1818,7 +1820,7 @@ void Gui::OverlayMenuTabTeleporter()
 					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 1.0f, 0.0f, 0.4f));
 					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.0f, 1.0f, 0.0f, 0.5f));
 
-					auto buttonLabel = format(FMT_STRING("Teleport###TeleportRequestEnabled{:d}"), i);
+					auto buttonLabel = format(FMT_STRING("Телепорт###TeleportRequestEnabled{:d}"), i);
 					if (ImGui::Button(buttonLabel.c_str(), ImVec2(-FLT_MIN, 0.0f)))
 						ErectusMemory::RequestTeleport(i);
 					ImGui::PopStyleColor(3);
@@ -1830,7 +1832,7 @@ void Gui::OverlayMenuTabTeleporter()
 					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.0f, 0.0f, 0.4f));
 					ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.0f, 0.0f, 0.0f, 0.5f));
 
-					auto buttonLabel = format(FMT_STRING("Teleport###TeleportRequestDisabled{:d}"), i);
+					auto buttonLabel = format(FMT_STRING("Телепорт###TeleportRequestDisabled{:d}"), i);
 					ImGui::Button(buttonLabel.c_str(), ImVec2(-FLT_MIN, 0.0f));
 					ImGui::PopStyleColor(3);
 					ImGui::PopItemFlag();
@@ -1845,7 +1847,7 @@ void Gui::OverlayMenuTabBitMsgWriter()
 {
 	if (ImGui::BeginTabItem("BitMsgWriter###BitMsgWriterTab"))
 	{
-		LargeButtonToggle("Message Sender Enabled", Settings::msgWriter.enabled);
+		LargeButtonToggle("Включить отправку сообщений", Settings::msgWriter.enabled);
 
 		ImGui::EndTabItem();
 	}

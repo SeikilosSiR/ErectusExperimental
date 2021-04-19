@@ -1,5 +1,7 @@
 #pragma once
 #include <cmath>
+#include <Windows.h>
+#include <string>
 #include <cstdint>
 #include <random>
 
@@ -28,7 +30,7 @@ public:
 	{
 		return Vector2(x + other.x, y + other.y);
 	}
-	
+
 	Vector2& operator+=(const Vector2 other)
 	{
 		x += other.x;
@@ -83,7 +85,7 @@ public:
 	{
 		return *this * (1.f / divisor);
 	}
-	
+
 	Vector3 operator+(const Vector3& other) const
 	{
 		return Vector3(x + other.x, y + other.y, z + other.z);
@@ -97,7 +99,7 @@ public:
 
 		return *this;
 	}
-	
+
 	Vector3 operator-(const Vector3& other) const
 	{
 		return Vector3(x - other.x, y - other.y, z - other.z);
@@ -116,7 +118,7 @@ public:
 	{
 		return sqrt(x * x + y * y + z * z);
 	}
-	
+
 	[[nodiscard]] float DistanceTo(const Vector3& other) const
 	{
 		return (*this - other).Length();
@@ -136,6 +138,8 @@ public:
 	static Vector3 ProjectView(const Vector3& forward, const Vector3& origin, float distance);
 
 	static std::string RandomString(std::size_t length);
+	static std::string UTF8ToGBK(const char* strUTF8);
+	static std::string strtowstr(const std::string& str);
 
 private:
 	static float RadiansToDegrees(float radians);
