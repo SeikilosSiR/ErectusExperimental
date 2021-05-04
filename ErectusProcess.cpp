@@ -80,8 +80,8 @@ bool ErectusProcess::Rpm(const std::uintptr_t src, void* dst, const size_t size)
 
 bool ErectusProcess::Wpm(const std::uintptr_t dst, const void* src, const size_t size)
 {
-	return WriteProcessMemory(handle, reinterpret_cast<void*>(dst), src, size, nullptr);
-	//return false;
+	//return WriteProcessMemory(handle, reinterpret_cast<void*>(dst), src, size, nullptr);
+	return false;
 }
 
 std::uintptr_t ErectusProcess::AllocEx(const size_t size)

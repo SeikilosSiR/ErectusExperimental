@@ -134,12 +134,11 @@ void Renderer::ResetDevice()
 
 void Renderer::LoadFonts()
 {
-	auto io = ImGui::GetIO();
-	io.Fonts->AddFontDefault();
-#pragma warning(suppress : 4996)
-	io.Fonts->AddFontFromFileTTF(format(FMT_STRING("{}\\Fonts\\arialbd.ttf"), std::getenv("WINDIR")).c_str(), 13.f);
-	ImGui_ImplDX9_CreateDeviceObjects();
+	ImGuiIO& io = ImGui::GetIO();
+	#pragma warning(suppress : 4996)
+	ImFont* font = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\arial.ttf", 14.f, NULL, io.Fonts->GetGlyphRangesCyrillic());
 
+	ImGui_ImplDX9_CreateDeviceObjects();
 }
 
 void Renderer::Resize(const unsigned width, const unsigned height)

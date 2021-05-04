@@ -6,13 +6,13 @@
 
 //FileVersion = 1.5.1.26
 //just rpm
-constexpr auto OFFSET_LOCAL_PLAYER = 0x05489f78UL;//
-constexpr auto OFFSET_ENTITY_LIST = 0x0525ED98UL;//
-constexpr auto OFFSET_MAIN = 0x054EC050UL;//
-constexpr auto OFFSET_CAMERA = 0x0647AED0UL;//
-constexpr auto OFFSET_GET_PTR_A1 = 0x05265E78UL;//
+constexpr auto OFFSET_LOCAL_PLAYER = 0x05571BE0UL;// 1.5.2.23
+constexpr auto OFFSET_ENTITY_LIST = 0x05334678UL;// 1.5.2.23
+constexpr auto OFFSET_MAIN = 0x055C9AD8UL;// 1.5.2.23
+constexpr auto OFFSET_CAMERA = 0x0655D4A0UL;// 1.5.2.23
+constexpr auto OFFSET_GET_PTR_A1 = 0x0533B168UL;// 1.5.2.23
 constexpr auto OFFSET_GET_PTR_A2 = 0x3DB6C20UL;//  
-constexpr auto OFFSET_NUKE_CODE = 0x0539F368UL;// 
+constexpr auto OFFSET_NUKE_CODE = 0x054769B8UL;// 1.5.2.23
 constexpr auto OFFSET_MAIN_WORLDSPACE = 0x539DE60UL;//
 constexpr auto OFFSET_ENTITY_ID = 0x05255380UL;// 
 
